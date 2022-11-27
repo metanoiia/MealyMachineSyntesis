@@ -195,7 +195,7 @@ void StructSynthesis::print( std::ostream & stream )
     for( int i = m_f.getRowCount() - 1; i >= 0; i-- )
         stream << "x" << i << " ";
 
-    for( int i = m_numQ; i >= 0; i-- )
+    for( int i = m_numQ - 1; i >= 0; i-- )
         stream << "Q" << i << " ";
 
     stream << std::endl <<"Where xi and Qi take values '0' or '1'" << std::endl << std::endl;
