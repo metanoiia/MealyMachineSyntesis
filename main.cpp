@@ -4,6 +4,9 @@
 #include <algorithm>
 #include "structsynthesis.h"
 
+#include <sstream>
+
+
 int main()
 {
     std::ifstream f("f_table1.txt");
@@ -11,7 +14,7 @@ int main()
 
     StructSynthesis ss( f, g );
 
-    std:: list < std::string > res;
+    std::list < std::string > res;
     std::list < int > x = { 0, 1, 2, 3, 4, 5, 6 }; //input impacts
 
     res = ss.put( x );
@@ -26,8 +29,11 @@ int main()
 
     fout.open( "check.txt", std::ios_base::trunc );
 
-    for( const std::string & s : res )
-        fout << s << std::endl;
+    if( !res.empty() )
+        for( const std::string & s : res )
+            fout << s << std::endl;
+    else
+        fout << "Invalid input data";
 
     fout.close();
 

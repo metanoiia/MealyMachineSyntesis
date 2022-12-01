@@ -17,9 +17,6 @@ private:
 
     std::string m_Q;
 
-    std::string currentOutputString;
-    std::string nextOutputString;
-
     std::string getStateStringDNF( int idx ); // 'idx' is number of bit
 
     void setOutputsDNF(); //init DNF for m_y

@@ -1,4 +1,5 @@
 #include "table.h"
+#include <sstream>
 
 Table::Table( std::ifstream & fin )
 {
@@ -10,11 +11,14 @@ Table::Table( std::ifstream & fin )
         std::getline( fin, line );
         if( !line.empty() )
         {
-            line.erase( remove_if( line.begin(), line.end(), isspace), line.end() );
-
             std::vector < TableItem > row;
-            std::transform( line.begin(), line.end(), std::back_inserter( row ), //push to row table items
-                            []( char sym ){  return TableItem( sym  - '0',  sym == '-' ); } );
+
+            std::stringstream ss( line );
+
+            std::string val;
+            while ( ss >> val )
+                row.push_back( ( val == "-" ) ? TableItem( -1, true ) :
+                                                TableItem( std::stoi( val, 0, 10 ), false ) );
 
             m_matrix.push_back( row ); //push to matrix new row
         }

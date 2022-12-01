@@ -7,9 +7,6 @@ StructSynthesis::StructSynthesis( std::ifstream & f_table, std::ifstream & g_tab
     m_numQ = static_cast <int> ( std::ceil( log2( m_f.getColCount() ) ) );//number of registers Q requiered for states storing
     m_Q = std::string( m_numQ, '0' );
 
-    currentOutputString = std::string( 3, ' ' );
-    nextOutputString = std::string( 3, ' ' );
-
     for( size_t i = 0; i < m_numQ; i++ )
     {
         m_D.push_back( DNF( getStateStringDNF( i ) ) );//push string DNF
@@ -26,7 +23,7 @@ StructSynthesis::StructSynthesis( std::ifstream & f_table, std::ifstream & g_tab
     for( auto & kv : m_y )
         kv.second.minimize();
 }
-bool equals( std::string first, std::string second, bool weakDash )
+bool equals( std::string first, std::string second )
 {
     if( first.length() != second.length() )
         return false;
@@ -37,7 +34,7 @@ bool equals( std::string first, std::string second, bool weakDash )
 
         for( ; firstIt != first.end(); firstIt++, secondIt++ )
         {
-            if( ( *firstIt == '-' || *secondIt == '-' ) && weakDash )
+            if( ( *firstIt == '-' || *secondIt == '-' ) )
                 continue;
             else
             {
@@ -53,17 +50,19 @@ std::list < std::string > StructSynthesis::put( std::list < int > xList )
 {
     std::list < std::string > result;
 
+    std::string outputStr;
+    std::string xStr;
+    std::string QStr;
+    std::string yStr;
+
     for( int x : xList )
     {
         if( ( x < 0 ) ||  ( x  >  m_f.getRowCount() - 1 ) )
             return std::list < std::string >();
         else
         {
-            std::string outputStr( 5, ' ' );
-
-            outputStr.at( 0 ) = x + '0'; //setting x Q y <- x value
-            outputStr.at( 2 ) = std::stoi( m_Q, 0, 2 ) + '0'; //setting x Q y <- Q value
-
+            xStr = std::to_string( x ) + " ";//setting x Q y <- x value
+            QStr = std::to_string( std::stoi( m_Q, 0, 2 ) ) + " ";
             std::string newQ = std::string( m_numQ, '0' );
 
             std::string sectionX( m_f.getRowCount(), '0' );
@@ -72,12 +71,15 @@ std::list < std::string > StructSynthesis::put( std::list < int > xList )
 
             for( size_t i = 0; i < m_D.size(); i++ )
             {
-                std::list < std::string > mdnf =  m_D.at(i).print();
+                std::list < std::string > mdnf =  m_D.at( i ).print();
 
                 for( const std::string & c : mdnf )
                 {
-                    if( equals( c, inputImpact , true ) )
+                    if( equals( c, inputImpact ) )
+                    {
                         newQ.at( ( m_numQ - 1 ) - i ) = '1';
+                        break;
+                    }
                 }
             }
 
@@ -87,9 +89,9 @@ std::list < std::string > StructSynthesis::put( std::list < int > xList )
 
                 for( const std::string & c : mdnf )
                 {
-                    if( equals( c, inputImpact, true ) )
+                    if( equals( c, inputImpact ) )
                     {
-                        outputStr.at( 4 ) = ( kv.first.isUndefined() ) ? '-' : kv.first.value() + '0'; //setting x Q y <- y value
+                        yStr = ( kv.first.isUndefined() ) ? "-" : std::to_string( kv.first.value() );//setting x Q y <- y value
                         break;
                     }
                 }
@@ -97,11 +99,11 @@ std::list < std::string > StructSynthesis::put( std::list < int > xList )
 
 
             m_Q = newQ;
+            outputStr = xStr + QStr + yStr;
             result.push_back( outputStr );
         }
     }
-    std::string lastStr( 3, ' ' );
-    lastStr.at( 2 ) = std::stoi( m_Q, 0, 2 ) + '0';
+    std::string lastStr = "  " + std::to_string( std::stoi( m_Q, 0, 2 ) );
 
     result.push_back( lastStr );
 
@@ -112,7 +114,7 @@ std::string StructSynthesis::getStateStringDNF( int idx )
 {
     std::string constituent; //'sectX'+'sectQ'
 
-    std::string sectionX(  m_f.getRowCount(), '0' );
+    std::string sectionX( m_f.getRowCount(), '0' );
     std::string sectionQ( m_numQ, '0' );
 
     std::string res( 1 << ( sectionX.length() + sectionQ.length() ), '0' );
@@ -151,7 +153,7 @@ void StructSynthesis::setOutputsDNF()
 {
     std::string constituent; //'sectX'+'sectQ'
 
-    std::string sectionX(  m_f.getRowCount(), '0' );
+    std::string sectionX( m_f.getRowCount(), '0' );
     std::string sectionQ( m_numQ, '0' );
 
     std::unordered_map < TableItem, std::string, TableItem::HashFunction > yPDNF; //outputs and PDNFs
@@ -163,7 +165,7 @@ void StructSynthesis::setOutputsDNF()
         yPDNF.insert( std::make_pair( kv.first, std::string( 1 << ( sectionX.length() + sectionQ.length() ), '0' ) ) );
 
 
-    int constNum; // num of set when function takess '1'
+    int constNum; // num of set when function takes '1'
 
     for( int i = 0; i < m_g.getRowCount(); i++ )
     {
@@ -190,7 +192,6 @@ void StructSynthesis::setOutputsDNF()
 
 void StructSynthesis::print( std::ostream & stream )
 {
-
     stream << "Note: each function is introduced by disjunctions of sets like this:" << std::endl;
     for( int i = m_f.getRowCount() - 1; i >= 0; i-- )
         stream << "x" << i << " ";
